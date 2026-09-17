@@ -74,6 +74,27 @@ class ArticlesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "The Quiet Crop"
   end
 
+  test "index lists articles under a publication parent" do
+    publication = record_publication!(
+      { name: unique_name("Archive Mag"), kind: "magazine" },
+      actor: @actor
+    )
+    record_article!(
+      publication,
+      {
+        title: "Archive copy under the title",
+        publication_recording_id: publication.id
+      },
+      actor: @actor
+    )
+
+    get recording_studio_published_article.recording_articles_path(publication)
+
+    assert_response :success
+    assert_includes response.body, "Archive copy under the title"
+    refute_includes response.body, "The Quiet Crop"
+  end
+
   test "index lists folder articles separately" do
     get recording_studio_published_article.recording_articles_path(@folder)
 

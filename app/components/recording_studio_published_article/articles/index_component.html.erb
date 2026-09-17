@@ -67,7 +67,7 @@
             name: "author",
             label: "Author",
             value: @filters["author"],
-            placeholder: "Ada Staff"
+            placeholder: "Author name"
           ) %>
         <% end %>
 
@@ -92,11 +92,13 @@
         <% end %>
       </div>
 
-      <%= render FlatPack::Button::Component.new(
-        text: "Show articles",
-        style: :primary,
-        type: "submit"
-      ) %>
+      <div>
+        <%= render FlatPack::Button::Component.new(
+          text: "Show articles",
+          style: :primary,
+          type: "submit"
+        ) %>
+      </div>
     <% end %>
   <% end %>
 

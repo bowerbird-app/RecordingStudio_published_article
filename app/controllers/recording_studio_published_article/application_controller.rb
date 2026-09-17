@@ -47,10 +47,17 @@ module RecordingStudioPublishedArticle
         return
       end
 
-      return unless defined?(RecordingStudioAccessible)
-      return if recording && RecordingStudioAccessible.authorized?(actor: actor, recording: recording, role: :view)
+      return if view_allowed?(actor, recording)
 
       head :forbidden
+    end
+
+    def view_allowed?(actor, recording)
+      return false if recording.blank?
+      return true if recording.respond_to?(:shared_root_tree?) && recording.shared_root_tree?
+      return true unless defined?(RecordingStudioAccessible)
+
+      RecordingStudioAccessible.authorized?(actor: actor, recording: recording, role: :view)
     end
   end
 end

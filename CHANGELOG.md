@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Queries::Collection` filtered listing for an arbitrary parent, plus `extra_scope`.
 - Flatpack index, card, and detail screens mounted at `/recording_studio_published_article`.
 - Dummy host seeds workspace, folder, and publication parents, plus URL, PDF, and screenshot copies.
+- Signed-in actors can view article indexes under a shared Publications catalogue. Accessible grants stay required on owned workspace trees.
 
 ### Changed
 - Product identity is Published Articles, not the addon template. Version is `0.3.0`.

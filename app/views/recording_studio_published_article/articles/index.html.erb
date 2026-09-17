@@ -1,4 +1,8 @@
-<% recording_studio_page_nav(title: "Articles") %>
+<% recording_studio_page_nav(
+  title: "Articles",
+  page_nav_back_url: main_app.root_path,
+  page_nav_back_label: "Home"
+) %>
 
 <%= render RecordingStudioPublishedArticle::Articles::IndexComponent.new(
   article_recordings: @article_recordings,
