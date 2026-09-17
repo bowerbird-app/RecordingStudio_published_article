@@ -1,5 +1,5 @@
 {
-  "name": "recording-studio-gem-template",
+  "name": "recording-studio-published-article",
   "install": ".cursor/install.sh",
   "start": ".cursor/start.sh",
   "terminals": [

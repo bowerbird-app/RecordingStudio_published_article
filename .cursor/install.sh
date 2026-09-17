@@ -26,7 +26,8 @@ sudo apt-get install -y --no-install-recommends \
   build-essential git git-lfs curl ca-certificates \
   libpq-dev postgresql-client libyaml-dev pkg-config \
   libssl-dev zlib1g-dev libffi-dev libreadline-dev libgmp-dev \
-  autoconf bison postgresql postgresql-contrib
+  autoconf bison postgresql postgresql-contrib \
+  libvips42 libvips-dev
 
 # ---------------------------------------------------------------------------
 # 2. Ruby (pinned by .ruby-version) via ruby-build, installed system-wide

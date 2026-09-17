@@ -3,19 +3,35 @@
 <div class="flex w-full flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Install",
-    subtitle: "Host-app setup for the mounted GemTemplate engine and its sample migrations.",
+    subtitle: "Host-app setup for Published Articles, Publications, and Attachable.",
     variant: :h1
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
     title: "Step 1",
-    subtitle: "Provide one section title for each step",
+    subtitle: "Add the gem and sibling pins."
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~CODE
+      gem "recording_studio_published_article"
+      gem "recording_studio_publications", github: "bowerbird-app/RecordingStudio_publications", tag: "v0.2.1"
+      gem "recording_studio_attachable", github: "bowerbird-app/RecordingStudio_attachable", tag: "v0.5.1"
+    CODE
+  ) %>
+
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "Step 2",
+    subtitle: "Install, migrate, and mount."
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :bash,
     code: <<~CODE
-      # Put the step instruction here.
+      bin/rails generate recording_studio_published_article:install
+      bin/rails generate recording_studio_published_article:migrations
+      bin/rails db:migrate
     CODE
   ) %>
 </div>

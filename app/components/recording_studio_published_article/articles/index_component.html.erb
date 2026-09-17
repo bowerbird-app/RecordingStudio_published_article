@@ -1,0 +1,135 @@
+<div class="flex w-full flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: @title,
+    subtitle: @subtitle,
+    variant: @title_variant
+  ) %>
+
+  <% if show_view_toggle? %>
+    <div class="flex flex-wrap items-center gap-3">
+      <%= render FlatPack::ButtonGroup::Component.new do |group| %>
+        <% group.button(FlatPack::Button::Component.new(
+          icon: "squares-2x2",
+          icon_only: true,
+          style: table_view? ? :secondary : :primary,
+          href: @cards_path,
+          aria: { label: "Cards", pressed: !table_view? }
+        )) %>
+        <% group.button(FlatPack::Button::Component.new(
+          icon: "table-cells",
+          icon_only: true,
+          style: table_view? ? :primary : :secondary,
+          href: @table_path,
+          aria: { label: "Table", pressed: table_view? }
+        )) %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if show_filters? %>
+    <%= form_with url: @filter_path, method: :get, local: true, class: "flex w-full flex-col gap-4" do %>
+      <% if @view.present? %>
+        <%= hidden_field_tag :view, @view %>
+      <% end %>
+
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <% if show_filter?("q") %>
+          <%= render FlatPack::SearchInput::Component.new(
+            name: "q",
+            label: "Search",
+            value: @filters["q"],
+            placeholder: "Title, author, or excerpt"
+          ) %>
+        <% end %>
+
+        <% if show_filter?("publication_recording_id") %>
+          <%= render FlatPack::Select::Component.new(
+            name: "publication_recording_id",
+            label: "Publication",
+            options: publication_options,
+            value: @filters["publication_recording_id"],
+            placeholder: "Any publication"
+          ) %>
+        <% end %>
+
+        <% if show_filter?("year") %>
+          <%= render FlatPack::Select::Component.new(
+            name: "year",
+            label: "Year",
+            options: year_options,
+            value: @filters["year"],
+            placeholder: "Any year"
+          ) %>
+        <% end %>
+
+        <% if show_filter?("author") %>
+          <%= render FlatPack::TextInput::Component.new(
+            name: "author",
+            label: "Author",
+            value: @filters["author"],
+            placeholder: "Author name"
+          ) %>
+        <% end %>
+
+        <% if show_filter?("has_url") %>
+          <%= render FlatPack::Select::Component.new(
+            name: "has_url",
+            label: "URL",
+            options: url_presence_options,
+            value: @filters["has_url"],
+            placeholder: "Any URL"
+          ) %>
+        <% end %>
+
+        <% if show_filter?("attachment_kind") %>
+          <%= render FlatPack::Select::Component.new(
+            name: "attachment_kind",
+            label: "PDF or screenshot",
+            options: attachment_kind_options,
+            value: @filters["attachment_kind"],
+            placeholder: "Any"
+          ) %>
+        <% end %>
+      </div>
+
+      <div>
+        <%= render FlatPack::Button::Component.new(
+          text: "Show articles",
+          style: :primary,
+          type: "submit"
+        ) %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if @article_recordings.blank? %>
+    <%= render FlatPack::EmptyState::Component.new(
+      title: "Nothing here yet",
+      description: "Articles land here once they are saved.",
+      icon: :inbox
+    ) %>
+  <% elsif table_view? %>
+    <%= render FlatPack::Table::Component.new(data: @article_recordings) do |table| %>
+      <% table.column(title: "Title", html: ->(recording) { helpers.link_to(article_title_for(recording), @show_path.call(recording)) }) %>
+      <% table.column(title: "Publication", html: ->(recording) { article_publication_name_for(recording) }) %>
+      <% table.column(title: "Published", html: ->(recording) { article_published_on_for(recording) }) %>
+      <% table.column(title: "Author", html: ->(recording) { recording.recordable&.author }) %>
+      <% table.column(title: "Copies", html: ->(recording) {
+        helpers.render(RecordingStudioPublishedArticle::Articles::CardComponent.new(
+          article_recording: recording,
+          show_path: @show_path,
+          badges_only: true
+        ))
+      }) %>
+    <% end %>
+  <% else %>
+    <%= render FlatPack::Grid::Component.new(cols: 3, gap: :md) do %>
+      <% @article_recordings.each do |recording| %>
+        <%= render RecordingStudioPublishedArticle::Articles::CardComponent.new(
+          article_recording: recording,
+          show_path: @show_path
+        ) %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

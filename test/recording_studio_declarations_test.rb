@@ -9,9 +9,12 @@ require "rails/test_help"
 class RecordingStudioDeclarationsTest < ActiveSupport::TestCase
   test "dummy recordable declarations validate and expose parent/root introspection" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal ["Workspace"], RecordingStudio.root_recordable_types
+    assert_includes RecordingStudio.root_recordable_types, "Workspace"
+    assert_includes RecordingStudio.root_recordable_types, "RecordingStudioPublications::PublicationCatalogue"
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for("Folder")
     assert_equal %w[Workspace Folder], RecordingStudio.allowed_parent_types_for(Page)
+    assert_equal %w[Workspace Folder RecordingStudioPublications::Publication],
+                 RecordingStudio.allowed_parent_types_for("RecordingStudioPublishedArticle::PublishedArticle")
   end
 
   test "root recordable creates a root recording" do
@@ -90,7 +93,39 @@ class RecordingStudioDeclarationsTest < ActiveSupport::TestCase
     assert RecordingStudio.capability_enabled?(:example, for: "Workspace")
     refute RecordingStudio.capability_enabled?(:example, for: "Folder")
     refute RecordingStudio.capability_enabled?(:example, for: "Page")
+    refute RecordingStudio.capability_enabled?(:example, for: "RecordingStudioPublishedArticle::PublishedArticle")
     assert_equal({ label: "dummy workspace" }, RecordingStudio.capability_options(:example, for: "Workspace"))
+    assert RecordingStudio.capability_enabled?(:attachable, for: "RecordingStudioPublishedArticle::PublishedArticle")
+  end
+
+  test "published articles nest under workspace and folder" do
+    actor = User.create!(
+      email: "declarations-#{SecureRandom.hex(4)}@example.com",
+      password: "Password",
+      password_confirmation: "Password"
+    )
+    Current.actor = actor
+    root_recording = RecordingStudio.root_recording_for(Workspace.create!(name: unique_name("Article Workspace")))
+    folder_recording = record_child(Folder.new(name: unique_name("Article Folder")), root_recording, root_recording)
+
+    workspace_article = root_recording.record(
+      RecordingStudioPublishedArticle::PublishedArticle,
+      actor: actor
+    ) do |article|
+      article.title = unique_name("Workspace article")
+    end
+    folder_article = root_recording.record(
+      RecordingStudioPublishedArticle::PublishedArticle,
+      actor: actor,
+      parent_recording: folder_recording
+    ) do |article|
+      article.title = unique_name("Folder article")
+    end
+
+    assert_equal root_recording, workspace_article.parent_recording
+    assert_equal folder_recording, folder_article.parent_recording
+  ensure
+    Current.actor = nil
   end
 
   private

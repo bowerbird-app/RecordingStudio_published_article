@@ -1,0 +1,37 @@
+<% badges = article_badge_items(@article_recording) %>
+<% if badges_only? %>
+  <div class="flex flex-wrap gap-2">
+    <% badges.each do |badge| %>
+      <%= render FlatPack::Badge::Component.new(text: badge[:text], style: badge[:style], size: :sm) %>
+    <% end %>
+  </div>
+<% else %>
+  <%= render FlatPack::Card::Component.new(
+    style: :interactive,
+    clickable: true,
+    href: @show_path.call(@article_recording)
+  ) do |card| %>
+    <% card.body do %>
+      <p class="text-base font-semibold text-(--surface-content-color)">
+        <%= article_title_for(@article_recording) %>
+      </p>
+      <% if article_publication_name_for(@article_recording).present? %>
+        <p class="mt-1 text-sm text-(--surface-muted-content-color)">
+          <%= article_publication_name_for(@article_recording) %>
+        </p>
+      <% end %>
+      <% if article_published_on_for(@article_recording).present? %>
+        <p class="mt-1 text-sm text-(--surface-muted-content-color)">
+          <%= article_published_on_for(@article_recording) %>
+        </p>
+      <% end %>
+      <% if badges.any? %>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <% badges.each do |badge| %>
+            <%= render FlatPack::Badge::Component.new(text: badge[:text], style: badge[:style], size: :sm) %>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

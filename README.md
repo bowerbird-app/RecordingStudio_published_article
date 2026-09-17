@@ -1,170 +1,155 @@
-# GemTemplate
+# Published Articles
 
-Internal template for building Rails engine addons on top of Recording Studio 4.x.
+A Recording Studio addon that stores a published article as a nested recordable. The parent is why you saved it. The publication directory is which title printed it. PDFs and screenshots are Attachable children.
 
-## What's Included
+This gem does not crawl the web, capture screenshots, or model Featured In.
 
-- **Recording Studio** 4.x gem pinned and configured
-- **Devise** authentication with a pre-seeded admin user
-- **Workspace**, **Folder**, and **Page** recordables seeded into the dummy host app
-- **FlatPack** UI component library for all views
-- **Dummy app** (`test/dummy/`) with a FlatPack sign-in screen, a home page on Recording Studio's default layout, mounted Recording Studio routes, and FlatPack's built-in rounded theme
+Current version is **0.3.0**.
 
-Authenticated dummy pages use Recording Studio's shared default layout (`RecordingStudio::UsesDefaultLayout`) plus FlatPack CSS and JS. Devise keeps its own sign-in layout. Dummy `/docs/*` pages stay in the dummy app as a host-app sandbox; they are not the product README.
+## Install
 
-## Quick Start
-
-### Cursor Cloud Agent (Recommended)
-
-A Cloud Agent boots this repo into a ready-to-use dev environment with no manual steps. The setup lives in `.cursor/`:
-
-- `install.sh` provisions Ruby (pinned by `.ruby-version`), PostgreSQL 16, all gems, the seeded dummy database, and compiled CSS at build time, then fetches Recording Studio skills.
-- `start.sh` starts PostgreSQL on every boot.
-- `environment.json` runs the `rails-server` and `tailwind-watch` terminals and exposes port 3000.
-
-Open port 3000 and sign in at `/users/sign_in`. No environment variables are required — the dummy app's `database.yml` defaults match the provisioned PostgreSQL cluster.
-
-### GitHub Codespaces
-
-1. Click **Code** → **Codespaces** → **Create codespace**
-2. Wait for setup to complete
-3. Run:
-   ```bash
-   cd test/dummy
-   bin/rails db:setup
-   bin/dev
-   ```
-4. Open port 3000 — you'll land on the dummy app home page and can sign in at `/users/sign_in`
-
-The dummy app is intended as a host-app validation surface for authentication, FlatPack rendering, Tailwind source scanning, and Recording Studio route wiring.
-
-### Login Credentials
-
-| Field    | Value             |
-|----------|-------------------|
-| Email    | admin@admin.com   |
-| Password | Password          |
-
-The login form is prefilled with these credentials for fast access.
-
-### Useful Routes
-
-- `/` — dummy app home page
-- `/users/sign_in` — Devise sign-in page
-- `/recording_studio` — redirect to `/` while the mounted Recording Studio engine remains data/API-focused
-- `/docs/install`, `/docs/config`, `/docs/recordable_types`, `/docs/recordings_tree`, `/docs/gem_views`, `/docs/methods` — dummy-only starter pages
-
-The home page in `test/dummy/app/views/home/index.html.erb` is a starting point for a minimal demo of the gem's primary behavior. Keep deeper explanations on the dummy docs pages, not in this README.
-
-## Architecture
-
-### Root Recording Pattern
-
-This template follows Recording Studio's root recording pattern:
-
-- **Workspace** is the top-level recordable
-- **Folder** and **Page** demonstrate nested recordables under the workspace root
-- Each configured recordable declares `recording_studio_recordable(...)`; strict declaration validation stays enabled
-- A root `RecordingStudio::Recording` wraps the Workspace
-- `Current.actor` is set from `current_user` (Devise) in `ApplicationController`
-
-### Extending Recording Studio
-
-To add new recordable types:
-
-1. Create your model (e.g., `Page`, `Comment`)
-2. Register it in `config/initializers/recording_studio.rb`:
-   ```ruby
-   RecordingStudio.configure do |config|
-     config.recordable_types = ["Workspace", "YourNewType"]
-   end
-   ```
-3. Declare whether the model can be a root and which parents may contain it:
-   ```ruby
-   class YourNewType < ApplicationRecord
-     recording_studio_recordable label: "Your new type",
-                                 root: false,
-                                 allowed_parent_types: ["Workspace", "Folder"]
-   end
-   ```
-4. Validate declarations and create recordings under the root:
-   ```ruby
-   RecordingStudio.validate_recordable_declarations!
-   root_recording = RecordingStudio.root_recording_for(workspace)
-   root_recording.record(YourNewType) do |record|
-     record.title = "Example"
-   end
-   ```
-
-### Recordable Declarations
-
-Every configured ActiveRecord recordable type must declare its hierarchy rules. Declarations are required; they are not version-specific.
-
-- `Workspace` declares `root: true`
-- `Folder` and `Page` declare `root: false, allowed_parent_types: ["Workspace", "Folder"]`
-- `config.require_recordable_declarations = true` remains enabled in the dummy app initializer
-
-Useful console checks:
+1. Add the gem and sibling pins.
 
 ```ruby
-RecordingStudio.validate_recordable_declarations!
-RecordingStudio.root_recordable_types
-RecordingStudio.allowed_parent_types_for("Page")
+gem "recording_studio_published_article"
+gem "recording_studio", github: "bowerbird-app/RecordingStudio", tag: "v4.2.0"
+gem "recording_studio_publications", github: "bowerbird-app/RecordingStudio_publications", tag: "v0.2.1"
+gem "recording_studio_attachable", github: "bowerbird-app/RecordingStudio_attachable", tag: "v0.5.1"
 ```
 
-### Capabilities
+2. Install and migrate.
 
-Capability mixins are opt-in. Installing this gem does not enable mixins on host types.
+```bash
+bin/rails generate recording_studio_published_article:install
+bin/rails generate recording_studio_publications:migrations
+bin/rails generate recording_studio_attachable:install
+bin/rails generate recording_studio_attachable:migrations
+bin/rails generate recording_studio_published_article:migrations
+bin/rails db:migrate
+```
 
-The dummy Workspace enables Accessible because that addon is bundled:
+3. Register types in the host Recording Studio initializer.
 
 ```ruby
-RecordingStudio.enable_capability(:accessible, on: Workspace)
+RecordingStudio.configure do |config|
+  config.recordable_types = [
+    "Workspace",
+    "Folder",
+    "RecordingStudioPublications::PublicationCatalogue",
+    "RecordingStudioPublications::Publication",
+    "RecordingStudioPublishedArticle::PublishedArticle",
+    "RecordingStudioAttachable::Attachment"
+  ]
+  config.require_recordable_declarations = true
+end
 ```
 
-The template also ships one example mixin that uses core 4.2.0's `include_for` factory:
+4. Set allowed parents. The default list is empty.
 
 ```ruby
-include RecordingStudio::Capabilities::Example.to(label: "dummy workspace")
+RecordingStudioPublishedArticle.configure do |config|
+  config.article_parent_types = %w[Workspace Folder RecordingStudioPublications::Publication]
+end
 ```
 
-`.to` wraps `RecordingStudio::Capabilities.include_for`. It does not add a fourth verb and it does not call `enable_capability` / `set_capability_options` itself. Folder and Page stay without the example mixin.
+5. Mount the engines.
 
-Use core `RecordingStudio::Hooks` and `RecordingStudio::Services::BaseService`. Do not copy those classes into a new addon.
+```ruby
+mount RecordingStudioPublishedArticle::Engine, at: "/recording_studio_published_article"
+mount RecordingStudioAttachable::Engine, at: "/recording_studio_attachable"
+```
 
-### FlatPack UI Components
+Mount Attachable so PDF and screenshot links use authorized engine paths. Do not mint raw blob URLs.
 
-All views use FlatPack ViewComponents. Available components include:
+## Record an article
 
-- `FlatPack::Button::Component` — Buttons (`:primary`, `:secondary`, `:ghost`)
-- `FlatPack::Card::Component` — Cards (`:default`, `:elevated`, `:outlined`)
-- `FlatPack::Alert::Component` — Alerts (`:success`, `:error`, `:warning`, `:info`)
-- `FlatPack::Badge::Component` — Status badges
-- `FlatPack::Table::Component` — Data tables
-- `FlatPack::TextInput::Component`, `EmailInput`, `PasswordInput` — Form inputs
-- `FlatPack::PageNav::Component` — Default-layout page navigation
-- `FlatPack::PageTitle::Component` — Page titles
+Write through the parent. Pass `parent_recording:` when the parent is not the root.
 
-Use the live FlatPack demo app at [flatpack.bowerbird.io](https://flatpack.bowerbird.io/) as the approved UI reference for current shared patterns. Its component table is the fastest way to discover available FlatPack components before introducing new custom UI.
+```ruby
+root = workspace_recording
+root.record(RecordingStudioPublishedArticle::PublishedArticle) do |article|
+  article.title = "The Quiet Crop"
+  article.url = "https://example.com/quiet-crop"
+  article.published_at = Time.utc(2024, 3, 12)
+  article.author = "Ada Staff"
+  article.excerpt = "A short pull-quote."
+  article.publication_recording_id = RecordingStudioPublishedArticle.publication_recording_for(publication).id
+end
 
-See the [FlatPack README](https://github.com/bowerbird-app/flatpack) for full documentation.
+root.record(
+  RecordingStudioPublishedArticle::PublishedArticle,
+  parent_recording: folder_recording
+) do |article|
+  article.title = "Folder copy"
+end
+```
 
-## Tech Stack
+`publication_recording_id` is the Publication recording id, not the snapshot row id. Title is required. URL, date, author, excerpt, and publication are optional. URL must be http or https when present.
 
-| Component       | Version |
-|-----------------|---------|
-| Ruby            | 3.3+    |
-| Rails           | 8.1+    |
-| PostgreSQL      | 16      |
-| TailwindCSS     | 4       |
-| RecordingStudio | 4.x (`~> 4.2` in the gemspec; dummy GitHub tag `v4.2.0`) |
-| Accessible      | dummy GitHub tag `v0.9.1` |
-| Root Switchable | dummy GitHub tag `v0.5.0` |
-| FlatPack        | dummy GitHub tag `v0.1.177` |
-| Devise          | latest  |
+Revise makes a new snapshot.
 
-The dummy Gemfile keeps `github:` sources so Bundler can fetch those gems. The gemspec still pins `recording_studio` to `~> 4.2` so copied addons declare the core dependency even when GitHub is the fetch source.
+```ruby
+root.revise(article_recording) do |article|
+  article.excerpt = "Updated pull-quote."
+end
+```
 
-## Documentation
+## Attach a PDF or screenshot
 
-The original gem template documentation is preserved in `docs/gem_template/` as architectural reference material. Use it as background on the engine conventions; this README and the dummy app are the source of truth for the Recording Studio addon workflow.
+Do this after the article exists. Attachable classifies by content type. A screenshot is an image. A PDF is a file.
+
+```ruby
+article_recording.import_attachment(io: png, filename: "page.png", content_type: "image/png")
+article_recording.import_attachment(io: pdf, filename: "page.pdf", content_type: "application/pdf")
+
+RecordingStudioPublishedArticle.screenshot_attachments(article_recording)
+RecordingStudioPublishedArticle.pdf_attachments(article_recording)
+```
+
+URL-only, PDF-only, screenshot-only, and combinations are all valid.
+
+## Index articles for a parent
+
+```ruby
+recordings = RecordingStudioPublishedArticle::Queries::Collection.call(
+  parent_recording: parent_recording,
+  filters: { year: 2024, q: "crop", attachment_kind: :pdf },
+  extra_scope: ->(relation) { relation },
+  sort: :published_at_desc
+)
+```
+
+Filters are `publication_recording_id`, `author`, `year`, `published_from`, `published_to`, `q` (title, author, excerpt), `has_url`, and `attachment_kind` (`:image`, `:file`, `:pdf`, `:none`, `:any`). Sort is `:published_at_desc` (default), `:published_at_asc`, or `:title`. `extra_scope` receives the Recording relation so the host can add scopes without changing this gem.
+
+Render the shipped index.
+
+```erb
+<%= render RecordingStudioPublishedArticle::Articles::IndexComponent.new(
+  article_recordings: recordings,
+  parent_recording: parent_recording,
+  filters: filters,
+  show_path: ->(recording) { recording_studio_published_article.article_path(recording) }
+) %>
+```
+
+Engine routes, mounted at `/recording_studio_published_article`:
+
+- `GET recordings/:recording_id/articles` lists articles for that parent
+- `GET articles/:id` shows one article
+
+## Dummy host
+
+`test/dummy` proves the gem. Sign in at `/users/sign_in` with `admin@admin.com` / `Password`. Home shows three indexes: the studio workspace, the Product Docs folder, and The Atlantic. Family pins stay Recording Studio `v4.2.0`, Accessible `v0.9.1`, Root Switchable `v0.5.0`, and Flatpack `v0.1.177`.
+
+## Boundaries
+
+This gem does not:
+
+- Invent a second attachment role or purpose field
+- Generate screenshots or crawl URLs
+- Copy publication name, website, or logo onto the article
+- Require Publication as the only parent
+- Ship Featured In, verification, regions, or targets
+- Insert Recording rows by hand. Use `record` and `revise`.
+
+Template internals stay in `docs/gem_template/`.

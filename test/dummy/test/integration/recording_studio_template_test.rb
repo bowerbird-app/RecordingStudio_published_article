@@ -12,8 +12,11 @@ class RecordingStudioTemplateTest < ActiveSupport::TestCase
 
   test "dummy app validates recordable declarations" do
     assert RecordingStudio.validate_recordable_declarations!
-    assert_equal [ "Workspace" ], RecordingStudio.root_recordable_types
+    assert_includes RecordingStudio.root_recordable_types, "Workspace"
+    assert_includes RecordingStudio.root_recordable_types, "RecordingStudioPublications::PublicationCatalogue"
     assert_equal [ "Workspace", "Folder" ], RecordingStudio.allowed_parent_types_for("Page")
+    assert_equal %w[Workspace Folder RecordingStudioPublications::Publication],
+                 RecordingStudio.allowed_parent_types_for("RecordingStudioPublishedArticle::PublishedArticle")
   end
 
   test "dummy app schema keeps accessible grants and excludes removed core tables" do
@@ -40,6 +43,14 @@ class RecordingStudioTemplateTest < ActiveSupport::TestCase
     private_root_recording = RecordingStudio::Recording.find_by!(recordable: private_workspace)
     folder_recording = RecordingStudio::Recording.find_by!(recordable: folder)
     page_recording = RecordingStudio::Recording.find_by!(recordable: page)
+    publication = RecordingStudioPublications::Publication.find_by!(key: "the-atlantic")
+    publication_recording = RecordingStudioPublications.recording_for(publication)
+    workspace_article = RecordingStudioPublishedArticle::Queries::Collection.call(parent_recording: root_recording).detect do |recording|
+      recording.recordable.title == "The Quiet Crop"
+    end
+    folder_article = RecordingStudioPublishedArticle::Queries::Collection.call(parent_recording: folder_recording).detect do |recording|
+      recording.recordable.title == "Screens from the harvest"
+    end
 
     assert_nil Current.actor
     assert_nil root_recording.parent_recording_id
@@ -50,6 +61,13 @@ class RecordingStudioTemplateTest < ActiveSupport::TestCase
     assert_equal folder_recording, page_recording.parent_recording
     assert_equal root_recording, page_recording.root_recording
     assert_equal 3, Workspace.count
+    assert_equal root_recording, workspace_article.parent_recording
+    assert_equal folder_recording, folder_article.parent_recording
+    assert_equal publication_recording.id, workspace_article.recordable.publication_recording_id
+    assert RecordingStudioPublishedArticle.pdf_attachments(workspace_article).any?
+    assert RecordingStudioPublishedArticle.screenshot_attachments(folder_article).any?
+    assert ActiveRecord::Base.connection.table_exists?(:recording_studio_published_article_articles)
+    refute ActiveRecord::Base.connection.column_exists?(:recording_studio_published_article_articles, :updated_at)
 
     assert_no_difference -> { User.count } do
       assert_no_difference -> { RecordingStudio::Recording.count } do
@@ -63,7 +81,7 @@ class RecordingStudioTemplateTest < ActiveSupport::TestCase
 
   test "workspace opts into accessible and the example mixin without enabling them globally" do
     workspace_source = File.read(Rails.root.join("app/models/workspace.rb"))
-    example_source = File.read(GemTemplate::Engine.root.join("lib/gem_template/capabilities/example.rb"))
+    example_source = File.read(RecordingStudioPublishedArticle::Engine.root.join("lib/recording_studio_published_article/capabilities/example.rb"))
 
     assert_includes workspace_source, "include RecordingStudio::Capabilities::Example.to(label: \"dummy workspace\")"
     assert_includes example_source, "RecordingStudio::Capabilities.include_for(:example, **)"
