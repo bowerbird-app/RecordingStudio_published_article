@@ -1,0 +1,34 @@
+<div class="flex w-full flex-col gap-6">
+  <%= render FlatPack::PageTitle::Component.new(
+    title: article_title_for(@article_recording),
+    subtitle: article_publication_name_for(@article_recording).presence || "A saved article",
+    variant: :h1
+  ) %>
+
+  <%= render FlatPack::Table::Component.new(data: attribute_rows, min_width: :sm) do |table| %>
+    <% table.column(title: "Field", html: ->(row) { row[:label] }) %>
+    <% table.column(title: "Value", html: ->(row) { row[:value] }) %>
+  <% end %>
+
+  <% if screenshots.any? %>
+    <%= render FlatPack::SectionTitle::Component.new(title: "Screenshots") %>
+    <div class="grid gap-4 md:grid-cols-2">
+      <% screenshots.each do |recording| %>
+        <%= image_tag screenshot_src(recording), alt: recording.recordable.name, class: "max-w-full rounded-[var(--radius-lg)]" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if pdfs.any? %>
+    <%= render FlatPack::SectionTitle::Component.new(title: "PDFs") %>
+    <div class="flex flex-col items-start gap-2">
+      <% pdfs.each do |recording| %>
+        <%= render FlatPack::Button::Component.new(
+          text: recording.recordable.name.presence || "Download PDF",
+          style: :secondary,
+          href: pdf_href(recording)
+        ) %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

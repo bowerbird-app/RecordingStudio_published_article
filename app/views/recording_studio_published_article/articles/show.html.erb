@@ -1,0 +1,9 @@
+<% recording_studio_page_nav(
+  title: article_title_for(@article_recording),
+  page_nav_back_url: recording_articles_path(@article_recording.parent_recording),
+  page_nav_back_label: "Articles"
+) %>
+
+<%= render RecordingStudioPublishedArticle::Articles::DetailComponent.new(
+  article_recording: @article_recording
+) %>

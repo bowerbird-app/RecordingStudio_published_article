@@ -1,0 +1,7 @@
+development:
+  article_parent_types:
+    - Workspace
+    - Folder
+
+production:
+  article_parent_types: []

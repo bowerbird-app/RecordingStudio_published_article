@@ -4,7 +4,9 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require_relative "simplecov_helper"
 require "minitest/autorun"
+require "json"
 require "rails"
+require "active_record"
 require "active_support/time"
 Time.zone ||= "UTC"
-require "gem_template"
+require "recording_studio_published_article"

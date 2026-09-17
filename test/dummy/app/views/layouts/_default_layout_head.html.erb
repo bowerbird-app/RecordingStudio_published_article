@@ -1,0 +1,4 @@
+<%# Core still puts data-theme on <body>. FlatPack themes belong on <html>. %>
+<%= javascript_tag nonce: true do %>
+  document.documentElement.setAttribute("data-theme", "rounded");
+<% end %>

@@ -1,0 +1,12 @@
+<% recording_studio_page_nav(title: "Articles") %>
+
+<%= render RecordingStudioPublishedArticle::Articles::IndexComponent.new(
+  article_recordings: @article_recordings,
+  parent_recording: @parent_recording,
+  filters: @filters,
+  view: @view,
+  show_path: ->(recording) { article_path(recording) },
+  cards_path: recording_articles_path(@parent_recording, **article_filter_query.merge(view: "cards")),
+  table_path: recording_articles_path(@parent_recording, **article_filter_query.merge(view: "table")),
+  filter_path: recording_articles_path(@parent_recording)
+) %>

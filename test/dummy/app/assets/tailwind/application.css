@@ -11,5 +11,14 @@
 @source "../../../vendor/bundle/**/flatpack/app/components/**/*.{rb,erb}";
 @source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/flatpack-*/app/components/**/*.{rb,erb}";
 
-/* Include the engine's views in the Tailwind build */
+/* Include the engine's views and components in the Tailwind build */
 @source "../../../../../app/views/**/*.erb";
+@source "../../../../../app/components/**/*.{rb,erb}";
+
+/* Include Attachable engine views used by PDF and screenshot delivery */
+@source "../../../vendor/bundle/**/recording_studio_attachable/app/views/**/*.erb";
+@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/RecordingStudio_attachable-*/app/views/**/*.erb";
+
+/* Include Publications engine views used by the dummy host */
+@source "../../../vendor/bundle/**/recording_studio_publications/app/views/**/*.erb";
+@source "../../../../../../usr/local/bundle/ruby/**/bundler/gems/RecordingStudio_publications-*/app/views/**/*.erb";

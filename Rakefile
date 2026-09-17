@@ -5,7 +5,9 @@ require "rake/testtask"
 
 DUMMY_TEST_FILES = [
   File.expand_path("test/controllers/docs_controller_test.rb", __dir__),
-  File.expand_path("test/recording_studio_declarations_test.rb", __dir__)
+  File.expand_path("test/recording_studio_declarations_test.rb", __dir__),
+  File.expand_path("test/published_article_test.rb", __dir__),
+  File.expand_path("test/queries/collection_test.rb", __dir__)
 ].freeze
 DUMMY_GEMFILE = File.expand_path("test/dummy/Gemfile", __dir__)
 DUMMY_APP_ROOT = File.expand_path("test/dummy", __dir__)
@@ -14,6 +16,8 @@ ROOT_TEST_EXCLUSIONS = %w[
   test/controllers/docs_controller_test.rb
   test/dummy/**/*_test.rb
   test/recording_studio_declarations_test.rb
+  test/published_article_test.rb
+  test/queries/collection_test.rb
   test/rename_verification_test.rb
 ].freeze
 DUMMY_BUNDLE_CLEARED_ENV = {
@@ -42,7 +46,7 @@ end
 def dummy_bundle_base_env
   {
     "BUNDLE_GEMFILE" => DUMMY_GEMFILE,
-    "DISABLE_SIMPLECOV" => "true"
+    "SIMPLECOV_COMMAND_NAME" => "dummy-rails"
   }
 end
 
@@ -71,7 +75,8 @@ namespace :test do
       run_command!(env, "bundle", "exec", "bin/rails", "db:prepare")
       run_command!(env, "bundle", "exec", "bin/rails", "test")
       DUMMY_TEST_FILES.each do |test_file|
-        run_command!(env, "bundle", "exec", "ruby", "-I#{TEST_ROOT}", test_file)
+        file_env = env.merge("SIMPLECOV_COMMAND_NAME" => File.basename(test_file, ".rb"))
+        run_command!(file_env, "bundle", "exec", "ruby", "-I#{TEST_ROOT}", test_file)
       end
     end
   end

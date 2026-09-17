@@ -3,30 +3,40 @@
 <div class="flex w-full flex-col gap-6">
   <%= render FlatPack::PageTitle::Component.new(
     title: "Methods",
-    subtitle: "Document the public methods your addon exposes.",
+    subtitle: "Public methods this addon exposes.",
     variant: :h1
   ) %>
 
   <%= render FlatPack::SectionTitle::Component.new(
-    title: "Example method",
-    subtitle: "recordingstudio_addon.example_method",
+    title: "Record an article",
+    subtitle: "Write through the parent."
   ) %>
 
   <%= render FlatPack::CodeBlock::Component.new(
     language: :ruby,
     code: <<~'CODE'
-      # Explain what this method does before the example.
-      result = RecordingstudioAddon.example_method(
-        # Replace with the real arguments this method accepts.
-        input: "demo value"
-      )
-
-      # Show what the method returns or what side effect it creates.
-      puts result
+      root.record(
+        RecordingStudioPublishedArticle::PublishedArticle,
+        parent_recording: folder_recording
+      ) do |article|
+        article.title = "The Quiet Crop"
+        article.url = "https://example.com/quiet-crop"
+      end
     CODE
   ) %>
 
-  <p class="text-sm text-(--body-muted-content-color)">
-    Provide one section title and codeblock for each method
-  </p>
+  <%= render FlatPack::SectionTitle::Component.new(
+    title: "List articles for a parent",
+    subtitle: "RecordingStudioPublishedArticle::Queries::Collection.call"
+  ) %>
+
+  <%= render FlatPack::CodeBlock::Component.new(
+    language: :ruby,
+    code: <<~'CODE'
+      RecordingStudioPublishedArticle::Queries::Collection.call(
+        parent_recording: parent_recording,
+        filters: { year: 2024, q: "crop", attachment_kind: :pdf }
+      )
+    CODE
+  ) %>
 </div>
