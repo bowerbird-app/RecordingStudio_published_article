@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Dummy and root Gemfile pins for Recording Studio `v4.2.0` → `v4.2.2` (revision `036686aa`). Bundler resolves gem version `4.2.1` at that tag. Gemspec floor stays `~> 4.2`.
+
 ## [0.2.2] - 2026-09-11
 
 ### Changed
